@@ -1,0 +1,107 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "causalphylo"
+version = "0.1.0"
+description = "Pearl's backdoor criterion over knowledge graphs — separates edges that may carry a causal claim from those that only assert co-occurrence"
+readme = "README.md"
+license = "LicenseRef-CausalPhylo-NonCommercial"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+authors = [
+    { name = "Kelyn Paul Njeri" },
+]
+keywords = [
+    "causal-inference",
+    "do-calculus",
+    "backdoor-criterion",
+    "knowledge-graph",
+    "identification",
+    "pearl",
+    "networkx",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+# The whole point of this package is that identification needs nothing
+# but a graph. NetworkX supplies strongly_connected_components and
+# is_d_separator; there is no second runtime dependency, and adding one
+# would be a reason to re-read this line rather than extend it.
+#
+# The floor is 3.3 because nx.is_d_separator (used by satisfies_backdoor)
+# was added there -- 3.2 ships only the deprecated d_separated spelling.
+# Verified by building and testing against networkx==3.3 on Python 3.13
+# / macOS arm64. Verified 2026-10-17.
+dependencies = [
+    "networkx>=3.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/Neoforge-Labs/causalphylo"
+Documentation = "https://github.com/Neoforge-Labs/causalphylo#readme"
+Repository = "https://github.com/Neoforge-Labs/causalphylo"
+Issues = "https://github.com/Neoforge-Labs/causalphylo/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/causalphylo"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/causalphylo/",
+    "tests/",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=6.0",
+    "ruff>=0.9",
+    "mypy>=1.14",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "src"]
+addopts = "-q --tb=short --doctest-modules"
+
+[tool.coverage.run]
+source = ["src/causalphylo"]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008", "B905", "SIM108"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["causalphylo"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

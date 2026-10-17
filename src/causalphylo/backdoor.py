@@ -32,12 +32,12 @@ but "here is how much it would take to break this".
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from itertools import combinations
 
 import networkx as nx
 
-from neorx.core.causal.graph_semantics import acyclic_core, causal_subgraph
+from causalphylo.graph_semantics import acyclic_core, causal_subgraph
 
 # A larger bound buys little and costs combinatorially: the number of
 # candidate subsets grows as C(pool, size). Reaching the bound is
@@ -57,7 +57,7 @@ __all__ = [
 ]
 
 
-class IdentificationReason(str, Enum):
+class IdentificationReason(StrEnum):
     """Why identification succeeded or failed. A closed set."""
 
     IDENTIFIABLE_BY_ADJUSTMENT = "identifiable_by_adjustment"

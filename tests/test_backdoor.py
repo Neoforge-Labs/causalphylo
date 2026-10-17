@@ -7,13 +7,14 @@ only after adjusting for U. Every test here is built from that shape or
 a deliberate corruption of it.
 """
 
+from dataclasses import FrozenInstanceError
+
 import networkx as nx
 import pytest
 
-from neorx.core.causal.backdoor import (
+from causalphylo.backdoor import (
     Identification,
     IdentificationReason,
-    confounding_sensitivity,
     find_adjustment_set,
     mutilated_graph,
     satisfies_backdoor,
@@ -175,5 +176,5 @@ def test_confounding_sensitivity_is_zero_with_no_near_misses():
 
 def test_identification_is_immutable():
     result = find_adjustment_set(_confounded_graph(), "X", "D")
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         result.identifiable = False
