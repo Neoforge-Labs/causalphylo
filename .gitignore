@@ -74,3 +74,6 @@ checkpoints/
 !runs/
 runs/*
 !runs/.gitkeep
+
+# MkDocs build output
+site/

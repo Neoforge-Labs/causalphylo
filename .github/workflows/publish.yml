@@ -1,0 +1,156 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target: pypi or testpypi"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+permissions:
+  contents: read
+  id-token: write  # Trusted publishing. No API token is stored in this repo.
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      # Catches a README that will not render on PyPI, which cannot be fixed
+      # after the fact: a released version is immutable.
+      - name: Verify metadata renders
+        run: twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  test-install:
+    name: Smoke-test the built wheel
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install the wheel
+        run: pip install dist/*.whl
+
+      # Everything below runs from a temp directory. Running inside a checkout
+      # would import the source tree instead of the installed package, which
+      # is how a broken wheel passes CI.
+      - name: Every exported name resolves
+        working-directory: ${{ runner.temp }}
+        run: |
+          python - <<'PY'
+          import importlib
+          for name in ("causalphylo", "causalphylo.backdoor",
+                       "causalphylo.graph_semantics"):
+              mod = importlib.import_module(name)
+              assert getattr(mod, "__all__", None), f"{name} declares no __all__"
+              missing = [n for n in mod.__all__ if not hasattr(mod, n)]
+              assert not missing, f"{name} exports undefined names: {missing}"
+              print(f"{name}: {len(mod.__all__)} names OK")
+          PY
+
+      # The README's headline example, run against the installed wheel. If
+      # this breaks, the first thing a new user copies does not work.
+      - name: The documented example actually works
+        working-directory: ${{ runner.temp }}
+        run: |
+          python - <<'PY'
+          import networkx as nx
+          from causalphylo import find_adjustment_set
+
+          G = nx.DiGraph()
+          G.add_edge("U", "X", edge_type="activates", evidence_class="regulatory")
+          G.add_edge("U", "D", edge_type="associated_with",
+                     evidence_class="genetic_association")
+          G.add_edge("X", "D", edge_type="associated_with",
+                     evidence_class="genetic_association")
+
+          v = find_adjustment_set(G, "X", "D")
+          assert v.identifiable is True, v
+          assert v.adjustment_set == ("U",), v
+          assert v.reason.value == "identifiable_by_adjustment", v
+          print("documented example OK:", v)
+          PY
+
+      - name: The wheel declares py.typed and ships no tests
+        run: |
+          python -m zipfile -l dist/*.whl > contents.txt
+          grep -q "causalphylo/py.typed" contents.txt \
+            || { echo "FAIL: py.typed absent, type hints will be ignored"; exit 1; }
+          ! grep -qE "^tests/" contents.txt \
+            || { echo "FAIL: tests/ leaked into the wheel"; exit 1; }
+          echo "wheel contents OK"
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: [build, test-install]
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.target == 'testpypi'
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/causalphylo
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build, test-install]
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'release' && github.event.action == 'published') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'pypi')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/causalphylo
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

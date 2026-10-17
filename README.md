@@ -4,6 +4,7 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-Non--Commercial-orange.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-causalphylo.neoforgelabs.tech-teal.svg)](https://causalphylo.neoforgelabs.tech/)
 
 **CausalPhylo** implements Pearl's backdoor criterion over
 [NetworkX](https://networkx.org) directed graphs, together with the
@@ -12,6 +13,8 @@ first place. It was extracted from [NeoRx](https://github.com/Neoforge-Labs/neor
 where it is the engine behind causal drug-target identification.
 
 It has one runtime dependency: NetworkX.
+
+**Full documentation: [causalphylo.neoforgelabs.tech](https://causalphylo.neoforgelabs.tech/)**
 
 ## The problem it solves
 
@@ -110,7 +113,7 @@ space. It is never hidden.
 |---|---|
 | `find_adjustment_set(G, treatment, outcome)` | Search for a minimal valid adjustment set |
 | `satisfies_backdoor(G, treatment, outcome, adjustment)` | Whether `adjustment` (a frozenset) satisfies the criterion |
-| `mutilated_graph(G, treatment)` | G with edges leaving the treatment removed |
+| `mutilated_graph(G, treatment)` | G with edges *into* the treatment removed — the interventional graph G<sub>X&#772;</sub> |
 | `confounding_sensitivity(dag, full_graph, treatment, outcome)` | Near-miss confounder count behind a trivial verdict |
 
 Cyclic nodes are not silently repaired. `acyclic_core` removes every node in a

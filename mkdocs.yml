@@ -1,0 +1,74 @@
+site_name: CausalPhylo
+site_description: Pearl's backdoor criterion over knowledge graphs, where not every edge has earned its arrow.
+site_author: Kelyn Paul Njeri
+site_url: https://causalphylo.neoforgelabs.tech/
+repo_url: https://github.com/Neoforge-Labs/causalphylo
+repo_name: Neoforge-Labs/causalphylo
+copyright: Copyright &copy; 2026 Kelyn Paul Njeri, NeoForge Labs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - toc.follow
+
+nav:
+  - Overview: index.md
+  - Which edges earn an arrow: admissibility.md
+  - Identification: identification.md
+  - API reference: api.md
+  - Licence: licence.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_signature_annotations: true
+            separate_signature: true
+            docstring_style: numpy
+            members_order: source
+            heading_level: 3
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Neoforge-Labs/causalphylo
+    - icon: fontawesome/solid/envelope
+      link: mailto:kelyn@neoforgelabs.tech

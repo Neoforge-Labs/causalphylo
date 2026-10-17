@@ -48,7 +48,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/Neoforge-Labs/causalphylo"
-Documentation = "https://github.com/Neoforge-Labs/causalphylo#readme"
+Documentation = "https://causalphylo.neoforgelabs.tech/"
 Repository = "https://github.com/Neoforge-Labs/causalphylo"
 Issues = "https://github.com/Neoforge-Labs/causalphylo/issues"
 
@@ -59,7 +59,10 @@ packages = ["src/causalphylo"]
 include = [
     "src/causalphylo/",
     "tests/",
+    "docs/",
+    "mkdocs.yml",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE",
     "pyproject.toml",
 ]
@@ -71,10 +74,29 @@ dev = [
     "ruff>=0.9",
     "mypy>=1.14",
 ]
+docs = [
+    # Floors are the versions the site was built and checked against on
+    # 2026-10-17: `mkdocs build --strict` clean, and the API page verified to
+    # contain prose pulled from the module docstrings rather than headings
+    # alone. Verified 2026-10-17.
+    "mkdocs-material>=9.7.7",
+    "mkdocstrings[python]>=1.0.7",
+    # A real upper bound, not caution. The Material for MkDocs maintainers
+    # state that MkDocs 2.0 removes the plugin system entirely, rewrites
+    # theming, and offers no migration path -- which would take out
+    # mkdocstrings, the search plugin, and the theme at once. Revisit when
+    # Material itself declares support, never by widening this blindly.
+    "mkdocs<2",
+]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src"]
-addopts = "-q --tb=short --doctest-modules"
+testpaths = ["tests", "src", "docs"]
+addopts = "-q --tb=short --doctest-modules --doctest-glob=*.md"
+# The published docs are executable. Every ``>>>`` block in docs/ and in
+# the README runs here, so an example cannot drift from the API it
+# demonstrates without failing the suite. NORMALIZE_WHITESPACE is for
+# prose line-wrapping of long list literals, nothing more.
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
 
 [tool.coverage.run]
 source = ["src/causalphylo"]

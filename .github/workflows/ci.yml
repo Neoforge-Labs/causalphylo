@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Tests (py${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: uv pip install --system -e . --group dev
+
+      # This also runs the doctests in src/ and docs/, which is where the
+      # published examples live.
+      - name: Test
+        run: python -m pytest
+
+  floors:
+    name: Declared dependency floor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The floor is a claim about what works. Installing the newest NetworkX
+      # and calling it verified would never test the claim, so pin the floor
+      # exactly and run the suite against it. nx.is_d_separator -- which
+      # satisfies_backdoor calls -- is why the floor is 3.3 and not lower.
+      - name: Install at the declared floor
+        run: |
+          uv pip install --system -e . --group dev
+          uv pip install --system 'networkx==3.3'
+          python -c "import networkx; print('networkx', networkx.__version__)"
+
+      - name: Test at the floor
+        run: python -m pytest
+
+  quality:
+    name: Ruff and mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: uv pip install --system -e . --group dev
+
+      # Whole-tree, not a whitelist. This package was extracted clean and the
+      # gate stays that way -- if a finding appears, fix it rather than
+      # narrowing the gate.
+      - name: Ruff
+        run: ruff check .
+
+      # There is deliberately no `ruff format --check` step. The formatter
+      # would rewrite 137 lines of this package's source into a style its
+      # author did not choose -- unhugging the braces of the frozenset
+      # literals, among other things -- and it reflows Python blocks inside
+      # Markdown, which would fight the alignment the docs examples rely on.
+      # A gate that is red the moment it runs teaches people to ignore gates,
+      # so this one is not added. `ruff check` above is whole-tree and clean.
+
+      - name: Mypy
+        run: mypy src/causalphylo
