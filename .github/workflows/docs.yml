@@ -30,7 +30,7 @@ jobs:
           # dependencies -- so the cache has no key to invalidate against
           # and warns on every run. Nothing to cache is better than a cache
           # that can only serve a stale entry.
-          cache: false
+          enable-cache: false
 
       - uses: actions/setup-python@v5
         with:
