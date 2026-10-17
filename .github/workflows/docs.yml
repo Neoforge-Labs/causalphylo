@@ -54,10 +54,23 @@ jobs:
           uv pip install --system --group dev
           python -m pytest --doctest-glob='*.md' docs/ src/ -o addopts=""
 
-      - name: Confirm the custom domain survived the build
+      # This checks only that docs/CNAME reached the output, which is where
+      # the intended domain is recorded. It does NOT configure the live
+      # custom domain: with Pages on build_type=workflow, a CNAME file in the
+      # artifact is inert -- it is served as a static file and the Pages API
+      # still reports cname=null. Verified on the first green deploy. The
+      # live domain is repo configuration, applied once:
+      #
+      #   gh api -X PUT repos/Neoforge-Labs/causalphylo/pages \
+      #     -f cname=causalphylo.neoforgelabs.tech
+      #
+      # Do not run that before the DNS record resolves. Setting an
+      # unvalidated domain makes the github.io URL redirect to it, which
+      # takes the site offline until the record propagates.
+      - name: Confirm the intended domain is recorded in the output
         run: |
           test -f site/CNAME || { echo "FAIL: CNAME missing from site/"; exit 1; }
-          echo "CNAME: $(cat site/CNAME)"
+          echo "intended domain: $(cat site/CNAME)"
 
       - uses: actions/upload-pages-artifact@v3
         with:
